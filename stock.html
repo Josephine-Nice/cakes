@@ -6,9 +6,15 @@
 <link rel="apple-touch-icon" href="icon_stock.png">
 <link rel="icon" href="icon_stock.png">
 <meta name="apple-mobile-web-app-title" content="Stock cakes">
-<meta http-equiv="refresh" content="0; url=https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec">
 </head><body style="font-family:sans-serif;text-align:center;padding:40px">
-<p>Ouverture de la saisie du stock…</p>
-<p><a href="https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec">Cliquez ici si rien ne se passe</a></p>
-<script>location.replace("https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec");</script>
+<p id="msg">Ouverture de la saisie du stock…</p>
+<p><a href="https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec">Ouvrir la saisie du stock</a></p>
+<script>
+// Adresse stock.html#installer : pas de redirection (sert uniquement a creer le raccourci avec la bonne icone)
+if (location.hash === "#installer") {
+  document.getElementById("msg").textContent = "Page d'installation du raccourci : touchez Partager puis Sur l'ecran d'accueil.";
+} else {
+  location.replace("https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec");
+}
+</script>
 </body></html>

@@ -42,7 +42,7 @@ DLC_PAR_SAVEUR = {"Audrey (rose framboise)": 3}   # exceptions : Audrey se vend 
 
 def dlc(saveur):
     return DLC_PAR_SAVEUR.get(saveur, DLC_JOURS)
-SEMAINES_HISTORIQUE = 6      # nb de semaines regardees pour la prevision
+SEMAINES_HISTORIQUE = 4      # nb de semaines regardees pour la prevision
 MARGE = 1.10                 # +10 % de securite
 SEUIL_ARRONDI = 0.4          # un cake de plus des que la fraction depasse 40 %
 JOURS_OUVERTS = {0, 1, 2, 3, 4, 5}   # cafe : lundi -> samedi

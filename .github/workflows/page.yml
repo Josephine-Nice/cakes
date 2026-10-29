@@ -2,8 +2,10 @@ name: Page cakes Joséphine
 
 on:
   schedule:
-    # Lun-Ven, toutes les 30 min entre 14h et 17h (heure UTC), pour couvrir l'heure d'été et d'hiver.
-    - cron: "10,40 14-16 * * 1-5"
+    # Lun-Ven (heure UTC, pour couvrir l'heure d'ete et d'hiver) :
+    # une fois vers 15h30, puis toutes les 10 minutes de 17h a 19h (Paris), periode de la saisie du stock.
+    - cron: "30 13 * * 1-5"
+    - cron: "*/10 15-17 * * 1-5"
   workflow_dispatch:        # permet aussi de la lancer à la main (bouton "Run workflow")
 
 permissions:

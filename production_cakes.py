@@ -554,6 +554,9 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="Cakes">
 <title>Cakes à produire · Joséphine</title>
 <style>
 :root{{--bg:#fbf7ee;--fg:#2a2320;--mut:#7a6f66;--line:#e5dccb;--acc:#b8412f;--card:#fff}}
@@ -649,6 +652,11 @@ def main():
         Path(a.html).parent.mkdir(parents=True, exist_ok=True)
         generer_html(ventes, plan, stock, aujourdhui, a.html, comptages)
         print(f"Page créée : {a.html}")
+        import shutil                                          # icones + porte d'entree de la saisie, publiees avec la page
+        for nom in ("icon.png", "icon_stock.png", "stock.html"):
+            src = Path(__file__).with_name(nom)
+            if src.exists():
+                shutil.copy(src, Path(a.html).parent / nom)
         if a.journal_apres:
             h, m = map(int, a.journal_apres.split(":"))
             maintenant = datetime.now(TZ)

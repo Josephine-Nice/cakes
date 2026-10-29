@@ -44,7 +44,7 @@ def dlc(saveur):
     return DLC_PAR_SAVEUR.get(saveur, DLC_JOURS)
 SEMAINES_HISTORIQUE = 4      # nb de semaines regardees pour la prevision
 MARGE = 1.10                 # +10 % de securite
-SEUIL_ARRONDI = 0.4          # un cake de plus des que la fraction depasse 40 %
+SEUIL_ARRONDI = 0.3          # un cake de plus des que la fraction depasse 30 %
 JOURS_OUVERTS = {0, 1, 2, 3, 4, 5}   # cafe : lundi -> samedi
 JOURS_PAULA = {0, 1, 2, 3, 4}        # Paula : lundi -> vendredi (prise de poste 17h30)
 HORIZON_PRODUCTIONS = 6      # nb de productions simulees a l'avance
@@ -293,7 +293,7 @@ def stock_estime(ventes, aujourdhui: date, comptages=None):
 # ---------------------------------------------------------------------- plan
 def arrondi_cakes(parts: float) -> int:
     entiers, frac = divmod(parts / PARTS_PAR_CAKE, 1)
-    return int(entiers) + (1 if frac >= SEUIL_ARRONDI else 0)
+    return int(entiers) + (1 if frac >= SEUIL_ARRONDI - 1e-9 else 0)   # 1e-9 : evite qu'un 0,3999999 (arrondi informatique) ne compte comme < 0,4
 
 
 def planifier(ventes, stock, aujourdhui: date):
@@ -418,10 +418,10 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
         barre = f"<div class='bar'><i style='width:{min(total, CAKES_MAX_PAR_JOUR) / CAKES_MAX_PAR_JOUR * 100:.0f}%'></i></div>"
         note = f"<span class='warn'> {pr['coupes']} cake(s) non produit(s) : plafond</span>" if pr["coupes"] else ""
         lignes.append(f"<tr><td><b>{e(JOURS_FR[pr['jour'].weekday()].capitalize())} {pr['jour']:%d/%m}</b></td>"
-                      f"<td class='sm'>{e(' + '.join(jfr(j) for j in pr['couvre']))}</td>{cellules}"
+                      f"{cellules}"
                       f"<td class='n'><b>{total}</b>{barre}{note}</td></tr>")
     entetes = "".join(f"<th>{e(court[s])}</th>" for s in SAVEURS)
-    plan_html = (f"<table><tr><th>Production (soir)</th><th>Pour les ventes de</th>{entetes}"
+    plan_html = (f"<table><tr><th>Production (soir)</th>{entetes}"
                  f"<th>Total / {CAKES_MAX_PAR_JOUR}</th></tr>{''.join(lignes)}</table>")
 
     # 2) stock estime
@@ -498,43 +498,56 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
         if d.weekday() in JOURS_OUVERTS:
             jours.append(d)
         d += timedelta(days=1)
-    bilan = {s: [] for s in SAVEURS}          # saveur -> [(produit_cakes, vendu_parts, stock_parts, manque_parts)]
+    # saveur -> [(matin, vendu, final, manque, produit_cakes, saisi)] ; tout en parts sauf produit_cakes
+    bilan = {s: [] for s in SAVEURS}
     for j in jours:
         for s in SAVEURS:
-            if j == aujourdhui:               # le stock estime est deja apres les ventes reelles du jour
-                vendu, manque = ventes.get(j, {}).get(s, 0), 0
+            if j == aujourdhui:
+                # le stock estime est deja apres les ventes reelles du jour, et avant la production du soir
+                matin, vendu, manque = None, ventes.get(j, {}).get(s, 0), 0
+                cpt = dernier_comptage(comptages or {}, s, aujourdhui)
+                saisi = bool(cpt and cpt[0] == aujourdhui)
             else:
+                matin = sum(l[1] for l in lots[s] if l[0] < j and l[0] + timedelta(days=dlc(s)) >= j)
                 vendu = prevoir(ventes, j)[0][s]
                 manque = consommer(lots[s], j, vendu, dlc(s))
+                saisi = False
+            final = sum(l[1] for l in lots[s])                # fin de journee, avant la production du soir
             n = prod_par_jour.get(j, {}).get(s, 0)
             if n:
                 lots[s].append([j, n * PARTS_PAR_CAKE])      # produit le soir : vendable des le lendemain
-            lots[s][:] = [l for l in lots[s] if l[0] + timedelta(days=dlc(s)) >= j + timedelta(days=1)]
-            bilan[s].append((n, vendu, sum(l[1] for l in lots[s]), manque))
+            bilan[s].append((matin, vendu, final, manque, n, saisi))
     tetes = "".join(f"<th>{jfr(j)}{'<br><span class=sm>aujourd’hui</span>' if j == aujourdhui else ''}</th>" for j in jours)
 
     def fr(v):   # parts -> cakes, une decimale, virgule francaise ("1,5"), sans ",0"
         t = f"{v / PARTS_PAR_CAKE:.1f}".replace(".", ",")
         return t[:-2] if t.endswith(",0") else t
 
-    def cel(v, gras=False, zero=False, cakes=False):
-        txt = (fr(v) if cakes else f"{v:.0f}") if (v >= 0.05 or zero) else "·"
-        txt = f"<b>{txt}</b>" if gras and v else txt
-        return f"<td class='n{' z' if not v and not zero else ''}'>{txt}</td>"
+    def cakes_cel(v, zero=False):
+        if v is None:
+            return "<td class='n z'>–</td>"
+        return f"<td class='n{'' if v >= 0.05 or zero else ' z'}'>{fr(v) if (v >= 0.05 or zero) else '·'}</td>"
 
-    def cel_stock(v, manque):
-        alerte = f"<div class='rupt'>manque {fr(manque)}</div>" if manque >= 0.5 else ""
-        return f"<td class='n'>{fr(v) if v >= 0.05 else '0'}{alerte}</td>"
-
-    def bloc(nom, donnees):
-        l1 = "".join(cel(x[0], gras=True) for x in donnees)
-        l2 = "".join(cel(x[1], cakes=True) for x in donnees)
-        l3 = "".join(cel_stock(x[2], x[3]) for x in donnees)
-        return (f"<tbody><tr><th rowspan='3' class='fl'>{e(nom)}</th><td class='lb'>Produit (cakes)</td>{l1}</tr>"
-                f"<tr><td class='lb'>Vendu (cakes)</td>{l2}</tr>"
-                f"<tr class='fin'><td class='lb'>Stock fin de journée (cakes)</td>{l3}</tr></tbody>")
-    tot = [tuple(sum(bilan[s][i][k] for s in SAVEURS) for k in range(4)) for i in range(len(jours))]
-    bilan_html = (f"<table class='bilan'><tr><th></th><th></th>{tetes}</tr>{bloc('Total', tot)}"
+    def bloc(nom, donnees, total=False):
+        l1 = "".join(cakes_cel(x[0], zero=True) for x in donnees)
+        l2 = "".join(cakes_cel(x[1]) for x in donnees)
+        l3 = ""
+        for x in donnees:
+            alerte = f"<div class='rupt'>manque {fr(x[3])}</div>" if x[3] >= 0.5 else ""
+            tag = "" if total else ("<div class='saisi'>saisi</div>" if x[5] else "")
+            l3 += f"<td class='n'><b>{fr(x[2]) if x[2] >= 0.05 else '0'}</b>{tag}{alerte}</td>"
+        l4 = "".join(f"<td class='n{'' if x[4] else ' z'}'>{('<b>%d</b>' % x[4]) if x[4] else '·'}</td>" for x in donnees)
+        return (f"<tbody><tr><th rowspan='4' class='fl'>{e(nom)}</th><td class='lb'>1. Stock du matin</td>{l1}</tr>"
+                f"<tr><td class='lb'>2. Ventes</td>{l2}</tr>"
+                f"<tr class='fin'><td class='lb'>3. Stock final</td>{l3}</tr>"
+                f"<tr class='prod'><td class='lb'>4. Production du soir</td>{l4}</tr></tbody>")
+    tot = []
+    for i in range(len(jours)):
+        matins = [bilan[s][i][0] for s in SAVEURS]
+        tot.append((None if matins[0] is None else sum(matins),
+                    sum(bilan[s][i][1] for s in SAVEURS), sum(bilan[s][i][2] for s in SAVEURS),
+                    sum(bilan[s][i][3] for s in SAVEURS), sum(bilan[s][i][4] for s in SAVEURS), False))
+    bilan_html = (f"<table class='bilan'><tr><th></th><th></th>{tetes}</tr>{bloc('Total', tot, total=True)}"
                   + "".join(bloc(court[s], bilan[s]) for s in SAVEURS) + "</table>")
 
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
@@ -560,7 +573,7 @@ td.n,th:not(:first-child){{text-align:right}} td.z{{color:var(--mut)}}
 .gros{{font-size:54px;font-weight:700;line-height:1;color:var(--acc)}} .nomc{{font-size:20px;font-weight:600;margin-top:4px}}
 .tot{{font-size:20px;margin:16px 0 0}} .etat{{font-size:15px;margin:0 0 14px;padding:8px 12px;border-radius:10px}} .etat.ok{{background:rgba(47,122,77,.12);color:#2f7a4d}} .etat.attente{{background:rgba(184,65,47,.10);color:var(--acc);font-weight:600}} .maj{{margin:10px 0 0}}
 .bilan td.lb{{font-size:12px;color:var(--mut);text-align:left;white-space:nowrap}} .bilan th.fl{{vertical-align:middle;font-size:14px;color:var(--fg);text-align:left}}
-.bilan tbody{{border-top:2px solid var(--line)}} .bilan tr.fin td{{background:rgba(184,65,47,.06)}} .bilan .rupt{{color:var(--acc);font-weight:600;font-size:11px}}
+.bilan tbody{{border-top:2px solid var(--line)}} .bilan tr.fin td{{background:rgba(184,65,47,.06)}} .bilan tr.prod td{{background:rgba(47,122,77,.07)}} .bilan .saisi{{font-size:11px;color:#2f7a4d;font-weight:600}} .bilan .rupt{{color:var(--acc);font-weight:600;font-size:11px}}
 h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-size:20px}}
 </style></head><body><main>
 {bandeau}
@@ -570,7 +583,7 @@ h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-s
 <h2>Plan de la semaine</h2><div class="wrap">{plan_html}</div>
 <p class="sm">Les jours à venir dépendent de ce qui sera réellement produit et vendu : seuls les premiers jours sont fiables.</p>
 <h2>Bilan jour par jour</h2>
-<p class="mut">Ce qui est produit le soir (vendable dès le lendemain), ce qui sera vendu en théorie dans la journée (moyenne pondérée + marge), et le stock qui reste en fin de journée, après la production du soir. Tout est en cakes (1 cake = {PARTS_PAR_CAKE} parts, donc 0,5 = un demi-cake). « manque N » (en rouge) signale que la demande prévue ce jour-là dépasse le stock de N cakes.</p>
+<p class="mut">Pour chaque jour, dans l'ordre : le <b>stock du matin</b> (stock de la veille + production du soir précédent), les <b>ventes</b> (réelles pour aujourd'hui, prévues ensuite : moyenne pondérée + marge), le <b>stock final</b> en fin de journée, avant la production (c'est celui que les filles saisissent : « saisi » si compté, sinon théorique), puis la <b>production du soir</b>. Tout est en cakes (1 cake = {PARTS_PAR_CAKE} parts, donc 0,5 = un demi-cake), sauf la production, en cakes entiers. « manque N » signale que la demande prévue dépasse le stock.</p>
 <div class="wrap">{bilan_html}</div>
 <h2>Stock estimé</h2><div class="wrap">{stock_html}</div>
 <h2>Détail des calculs</h2>

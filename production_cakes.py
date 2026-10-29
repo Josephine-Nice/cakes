@@ -464,7 +464,6 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     c0 = comptage(p0["items"])
     total0 = sum(c0.values())
     titre0 = f"{JOURS_FR[p0['jour'].weekday()].capitalize()} {p0['jour']:%d/%m}"
-    pour0 = e(libelle_jours(p0["couvre"]))
     if total0:
         tuiles = "".join(
             f"<div class='tuile'><div class='gros'>{c0[s]}</div><div class='nomc'>{e(court[s])}</div>"
@@ -479,7 +478,7 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
         corps0 += (f"<p class='warn'>Plafond de {CAKES_MAX_PAR_JOUR} cakes atteint : "
                    f"{p0['coupes']} cake(s) non produit(s).</p>")
     bandeau = (f"<section class='paula'><div class='sm'>À produire ce soir · {e(titre0)}</div>"
-               f"<h1>Bonjour Paula 👋</h1><p class='pour'>Cakes pour les ventes de {pour0}</p>{corps0}</section>")
+               f"<h1>Bonjour Paula 👋</h1><p class='pour'>Voici la production de ce soir :</p>{corps0}</section>")
 
     # 0 bis) bilan jour par jour : produit / vendu (theorie) / stock en fin de journee
     lots = {s: [l[:] for l in stock[s]] for s in SAVEURS}

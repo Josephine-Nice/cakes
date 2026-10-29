@@ -1,0 +1,58 @@
+name: Page cakes Joséphine
+
+on:
+  schedule:
+    # Lun-Ven, toutes les 30 min entre 14h et 17h (heure UTC), pour couvrir l'heure d'été et d'hiver.
+    - cron: "10,40 14-16 * * 1-5"
+  workflow_dispatch:        # permet aussi de la lancer à la main (bouton "Run workflow")
+
+permissions:
+  contents: write           # pour enregistrer le journal des productions
+  pages: write
+  id-token: write
+
+concurrency:
+  group: page-cakes
+  cancel-in-progress: false
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests
+
+      - name: Calculer et créer la page
+        env:
+          SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_ACCESS_TOKEN }}
+          SQUARE_LOCATION_ID: ${{ secrets.SQUARE_LOCATION_ID }}
+          STOCK_SHEET_URL: ${{ secrets.STOCK_SHEET_URL }}
+        run: python production_cakes.py --html site/index.html --journal-apres 17:10
+
+      - name: Enregistrer le journal des productions
+        run: |
+          git config user.name "cakes-bot"
+          git config user.email "cakes-bot@users.noreply.github.com"
+          git add journal_production.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Journal des productions" && git push)
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4

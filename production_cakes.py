@@ -487,7 +487,8 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     else:
         etat = ("<p class='etat attente'>Stock du jour pas encore saisi. "
                 "Attendez la saisie, puis rechargez la page : les quantités peuvent changer.</p>")
-    bandeau = (f"<section class='paula'><div class='sm'>À produire ce soir · {e(titre0)}</div>"
+    bandeau = (f"<section class='paula'><button class='maj-btn' onclick='rafraichir()'>↻ Actualiser</button>"
+               f"<div class='sm'>À produire ce soir · {e(titre0)}</div>"
                f"<h1>Bonjour Paula 👋</h1><p class='pour'>Voici la production de ce soir :</p>{etat}{corps0}</section>")
 
     # 0 bis) bilan jour par jour : produit / vendu (theorie) / stock en fin de journee
@@ -553,7 +554,6 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="refresh" content="300">
 <title>Cakes à produire · Joséphine</title>
 <style>
 :root{{--bg:#fbf7ee;--fg:#2a2320;--mut:#7a6f66;--line:#e5dccb;--acc:#b8412f;--card:#fff}}
@@ -567,6 +567,7 @@ td.n,th:not(:first-child){{text-align:right}} td.z{{color:var(--mut)}}
 .bar{{height:5px;background:var(--line);border-radius:3px;margin-top:4px}} .bar i{{display:block;height:100%;background:var(--acc);border-radius:3px}}
 .warn{{color:var(--acc);font-size:12px}} .wrap{{overflow-x:auto}}
 .paula{{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:20px 20px 16px;margin-bottom:8px}}
+.paula{{position:relative}} .maj-btn{{position:absolute;top:14px;right:14px;font:inherit;font-size:15px;font-weight:600;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);cursor:pointer}}
 .paula h1{{font-size:28px;margin:2px 0 2px}} .pour{{font-size:17px;margin:0 0 16px}}
 .tuiles{{display:flex;flex-wrap:wrap;gap:12px}}
 .tuile{{flex:1 1 130px;max-width:200px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}}
@@ -589,7 +590,12 @@ h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-s
 <h2>Détail des calculs</h2>
 <p class="mut">Pour chaque jour : les ventes réelles des mêmes jours de semaine passés (les plus récents comptent plus), la moyenne pondérée, puis la marge de {int((MARGE - 1) * 100)} %.</p>
 <div class="wrap">{''.join(blocs)}</div>
-</main></body></html>"""
+</main>
+<script>
+function rafraichir(){{ location.href = location.pathname + '?r=' + Date.now(); }}
+// recharge toute seule chaque minute, sauf si on est en train de lire plus bas dans la page
+setInterval(function(){{ if (window.scrollY < 40) rafraichir(); }}, 60000);
+</script></body></html>"""
     Path(chemin).write_text(page, encoding="utf-8")
 
 

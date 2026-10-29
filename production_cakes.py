@@ -477,8 +477,18 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     if p0["coupes"]:
         corps0 += (f"<p class='warn'>Plafond de {CAKES_MAX_PAR_JOUR} cakes atteint : "
                    f"{p0['coupes']} cake(s) non produit(s).</p>")
+    nb_cpt = sum(1 for s_ in SAVEURS
+                 if (c_ := dernier_comptage(comptages or {}, s_, aujourdhui)) and c_[0] == aujourdhui)
+    if nb_cpt == len(SAVEURS):
+        etat = f"<p class='etat ok'>✔ Stock du jour saisi ({nb_cpt}/{len(SAVEURS)} saveurs) : vous pouvez produire.</p>"
+    elif nb_cpt:
+        etat = (f"<p class='etat ok'>Stock du jour saisi pour {nb_cpt}/{len(SAVEURS)} saveurs. "
+                f"Les autres sont estimées.</p>")
+    else:
+        etat = ("<p class='etat attente'>Stock du jour pas encore saisi. "
+                "Attendez la saisie, puis rechargez la page : les quantités peuvent changer.</p>")
     bandeau = (f"<section class='paula'><div class='sm'>À produire ce soir · {e(titre0)}</div>"
-               f"<h1>Bonjour Paula 👋</h1><p class='pour'>Voici la production de ce soir :</p>{corps0}</section>")
+               f"<h1>Bonjour Paula 👋</h1><p class='pour'>Voici la production de ce soir :</p>{etat}{corps0}</section>")
 
     # 0 bis) bilan jour par jour : produit / vendu (theorie) / stock en fin de journee
     lots = {s: [l[:] for l in stock[s]] for s in SAVEURS}
@@ -530,6 +540,7 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta http-equiv="refresh" content="300">
 <title>Cakes à produire · Joséphine</title>
 <style>
 :root{{--bg:#fbf7ee;--fg:#2a2320;--mut:#7a6f66;--line:#e5dccb;--acc:#b8412f;--card:#fff}}
@@ -547,7 +558,7 @@ td.n,th:not(:first-child){{text-align:right}} td.z{{color:var(--mut)}}
 .tuiles{{display:flex;flex-wrap:wrap;gap:12px}}
 .tuile{{flex:1 1 130px;max-width:200px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}}
 .gros{{font-size:54px;font-weight:700;line-height:1;color:var(--acc)}} .nomc{{font-size:20px;font-weight:600;margin-top:4px}}
-.tot{{font-size:20px;margin:16px 0 0}} .maj{{margin:10px 0 0}}
+.tot{{font-size:20px;margin:16px 0 0}} .etat{{font-size:15px;margin:0 0 14px;padding:8px 12px;border-radius:10px}} .etat.ok{{background:rgba(47,122,77,.12);color:#2f7a4d}} .etat.attente{{background:rgba(184,65,47,.10);color:var(--acc);font-weight:600}} .maj{{margin:10px 0 0}}
 .bilan td.lb{{font-size:12px;color:var(--mut);text-align:left;white-space:nowrap}} .bilan th.fl{{vertical-align:middle;font-size:14px;color:var(--fg);text-align:left}}
 .bilan tbody{{border-top:2px solid var(--line)}} .bilan tr.fin td{{background:rgba(184,65,47,.06)}} .bilan .rupt{{color:var(--acc);font-weight:600;font-size:11px}}
 h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-size:20px}}

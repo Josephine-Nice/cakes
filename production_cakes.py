@@ -37,7 +37,7 @@ CAKES_MAX_PAR_JOUR = 6       # capacite de Paula
 CAKES_CIBLE_DEFAUT = 5       # charge visee par jour (marge sous le plafond)
 CAKES_CIBLE_PAR_JOUR = {4: 4}   # vendredi : 4 seulement, pour pre-fabriquer le stock du week-end/lundi
 DLC_JOURS = 4               # un cake produit le jour J se vend de J+1 a J+4
-DLC_PAR_SAVEUR = {"Audrey (rose framboise)": 3}   # exceptions : Audrey se vend de J+1 a J+3
+DLC_PAR_SAVEUR = {"Audrey (rose framboise)": 3, "Val (matcha chocolat blanc)": 3}   # exceptions : se vendent de J+1 a J+3
 
 
 def dlc(saveur):
@@ -579,7 +579,7 @@ h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-s
 {bandeau}
 <p class="sm maj">Mis à jour le {datetime.now(TZ):%d/%m/%Y à %H:%M} à partir des ventes Square.</p>
 <h2 class="det">Détail : plan de la semaine, stock et calculs</h2>
-<p class="mut">{PARTS_PAR_CAKE} parts par cake, DLC {DLC_JOURS} jours (Audrey : {dlc('Audrey (rose framboise)')} jours), {CAKES_MAX_PAR_JOUR} cakes maximum par jour.</p>
+<p class="mut">{PARTS_PAR_CAKE} parts par cake, DLC {DLC_JOURS} jours (Audrey et Val : {dlc('Audrey (rose framboise)')} jours), {CAKES_MAX_PAR_JOUR} cakes maximum par jour.</p>
 <h2>Plan de la semaine</h2><div class="wrap">{plan_html}</div>
 <p class="sm">Les jours à venir dépendent de ce qui sera réellement produit et vendu : seuls les premiers jours sont fiables.</p>
 <h2>Bilan jour par jour</h2>

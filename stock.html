@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Stock cakes</title>
-<link rel="apple-touch-icon" href="icon_stock.png">
-<link rel="icon" href="icon_stock.png">
+<link rel="apple-touch-icon" href="icone-stock-2.png">
+<link rel="icon" href="icone-stock-2.png">
 <meta name="apple-mobile-web-app-title" content="Stock cakes">
 </head><body style="font-family:sans-serif;text-align:center;padding:40px">
 <p id="msg">Ouverture de la saisie du stock…</p>
@@ -13,6 +13,8 @@
 // Adresse stock.html#installer : pas de redirection (sert uniquement a creer le raccourci avec la bonne icone)
 if (location.hash === "#installer") {
   document.getElementById("msg").textContent = "Page d'installation du raccourci : touchez Partager puis Sur l'ecran d'accueil.";
+  // On retire "#installer" de l'adresse (sans recharger) : le raccourci memorise alors stock.html tout court, qui renvoie vers la saisie.
+  history.replaceState(null, "", location.pathname + location.search);
 } else {
   location.replace("https://script.google.com/macros/s/AKfycbzOkube--sS5D6-2pVFSjPU0qTD9E9WwSl9MdlVgUaxNPV8jw3OTNNQJob8XJTlFs1isA/exec");
 }

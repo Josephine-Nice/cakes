@@ -653,7 +653,7 @@ def main():
         generer_html(ventes, plan, stock, aujourdhui, a.html, comptages)
         print(f"Page créée : {a.html}")
         import shutil                                          # icones + porte d'entree de la saisie, publiees avec la page
-        for nom in ("icon.png", "icon_stock.png", "stock.html"):
+        for nom in ("icon.png", "icone-stock-2.png", "stock.html"):
             src = Path(__file__).with_name(nom)
             if src.exists():
                 shutil.copy(src, Path(a.html).parent / nom)

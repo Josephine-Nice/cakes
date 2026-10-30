@@ -2,8 +2,12 @@ name: Page cakes Joséphine
 
 on:
   schedule:
-    # Lun-Ven (heure UTC, pour couvrir l'heure d'ete et d'hiver) :
+    # Heures en UTC, pour couvrir l'heure d'ete et d'hiver.
+    # Chaque nuit : mise a jour juste apres minuit, pour que la page du matin soit rouge.
+    # Puis lun-ven :
     # une fois vers 15h30, puis toutes les 10 minutes de 17h a 19h (Paris), periode de la saisie du stock.
+    - cron: "5 22 * * *"       # passage a minuit (Paris, heure d'ete) : la page repart au rouge
+    - cron: "5 23 * * *"       # passage a minuit (Paris, heure d'hiver)
     - cron: "30 13 * * 1-5"
     - cron: "*/10 15-17 * * 1-5"
   workflow_dispatch:        # permet aussi de la lancer à la main (bouton "Run workflow")

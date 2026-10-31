@@ -635,8 +635,14 @@ def main():
     a = ap.parse_args()
 
     aujourdhui = date.fromisoformat(a.date) if a.date else datetime.now(TZ).date()
-    if aujourdhui.weekday() not in JOURS_PAULA:
-        sys.exit("Paula ne travaille pas ce jour-la : rien a envoyer.")
+    jour_ferme = aujourdhui.weekday() not in JOURS_PAULA
+    if jour_ferme:
+        if not a.html:
+            sys.exit("Paula ne travaille pas ce jour-la : rien a envoyer.")
+        # Page web un samedi / dimanche : elle montre deja le prochain jour de travail de Paula (lundi),
+        # exactement comme la mise a jour de lundi minuit. Rien n'est ecrit dans le journal.
+        while aujourdhui.weekday() not in JOURS_PAULA:
+            aujourdhui += timedelta(days=1)
 
     if a.csv:
         ventes = ventes_depuis_csv(a.csv)
@@ -657,7 +663,7 @@ def main():
             src = Path(__file__).with_name(nom)
             if src.exists():
                 shutil.copy(src, Path(a.html).parent / nom)
-        if a.journal_apres:
+        if a.journal_apres and not jour_ferme:
             h, m = map(int, a.journal_apres.split(":"))
             maintenant = datetime.now(TZ)
             if (maintenant.hour, maintenant.minute) >= (h, m):

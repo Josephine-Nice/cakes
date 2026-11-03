@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock cakes Joséphine</title>
+<style>
+  :root{--bg:#fbf7ee;--card:#fff;--fg:#2a2320;--mut:#7a6f66;--line:#e5dccb;--acc:#b8412f;--accfg:#fff;--ok:#2f7a4d}
+  @media (prefers-color-scheme:dark){:root{--bg:#1f1b18;--card:#2a2522;--fg:#f0e9de;--mut:#a89d92;--line:#3a332d;--acc:#e8826f;--accfg:#1f1b18;--ok:#6fcf97}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.4 -apple-system,system-ui,sans-serif;padding:20px 16px 170px}
+  main{max-width:460px;margin:auto}
+  h1{font-size:22px;margin:0 0 4px} p.mut{color:var(--mut);margin:0 0 18px;font-size:15px}
+  label.date{display:block;font-size:14px;color:var(--mut);margin-bottom:6px}
+  input[type=date],input[type=password]{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);margin-bottom:16px}
+  .row.manque{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+  .row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .nom{flex:1;min-width:0} .nom b{display:block} .nom small{color:var(--mut);display:block;font-size:13px}
+  .ctrl{display:flex;align-items:center;gap:6px}
+  .ctrl button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:22px;line-height:1}
+  .ctrl input{width:64px;text-align:center;font:inherit;font-size:20px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+  .eq{font-size:12px;color:var(--mut);text-align:center;min-height:16px;margin-top:2px}
+  .hint{font-size:13px;color:var(--mut);margin:-8px 0 16px}
+  .barre{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 16px rgba(0,0,0,.08)}
+  .barre .in{max-width:460px;margin:auto}
+  .go{width:100%;font:inherit;font-weight:600;font-size:18px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:var(--accfg)}
+  .go[disabled]{opacity:.6}
+  #msg{margin:0 0 8px;font-size:15px;min-height:22px;line-height:1.3} #msg.ok{color:var(--ok)} #msg.err{color:var(--acc)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Stock de cakes</h1>
+  <p class="mut">Combien de parts reste-t-il en rayon ? Les 5 saveurs sont obligatoires.</p>
+
+  <label class="date" for="date">Date du comptage</label>
+  <input type="date" id="date">
+  <div class="hint">1 cake = 11 parts. Mettez 0 si la saveur est épuisée (ne laissez aucune case vide).</div>
+
+  <div id="liste"></div>
+
+</main>
+<div class="barre"><div class="in">
+  <div id="msg" role="status"></div>
+  <button class="go" id="go">Enregistrer</button>
+</div></div>
+
+<script>
+  var SAVEURS = <?!= JSON.stringify(saveurs) ?>;
+
+  function ajd(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  document.getElementById('date').value = ajd();
+
+  var liste = document.getElementById('liste');
+  SAVEURS.forEach(function(s){
+    var r = document.createElement('div'); r.className = 'row';
+    r.innerHTML = '<div class="nom"><b>'+s.nom+'</b><small>'+s.detail+'</small></div>'+
+      '<div><div class="ctrl"><button type="button" data-d="-1" aria-label="moins">−</button>'+
+      '<input type="number" inputmode="numeric" min="0" max="200" placeholder="—" id="p_'+s.id+'">'+
+      '<button type="button" data-d="1" aria-label="plus">+</button></div><div class="eq" id="e_'+s.id+'"></div></div>';
+    liste.appendChild(r);
+    var inp = r.querySelector('input'), eq = r.querySelector('.eq');
+    function maj(){ var v = inp.value; eq.textContent = v === '' ? '' : '≈ ' + (Math.round(Number(v)/11*10)/10).toString().replace('.',',') + ' cake'; }
+    inp.addEventListener('input', function(){ r.classList.remove('manque'); maj(); });
+    r.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click', function(){
+        var v = inp.value === '' ? 0 : Number(inp.value);
+        inp.value = Math.max(0, v + Number(b.dataset.d)); r.classList.remove('manque'); maj();
+      });
+    });
+  });
+
+  var go = document.getElementById('go'), msg = document.getElementById('msg');
+  function afficher(t, cls){ msg.textContent = t; msg.className = cls || ''; }
+  go.addEventListener('click', function(){
+    var parts = {}, manquantes = [];
+    SAVEURS.forEach(function(s){
+      var inp = document.getElementById('p_'+s.id), ligne = inp.closest('.row');
+      parts[s.id] = inp.value;
+      var vide = inp.value === '';
+      ligne.classList.toggle('manque', vide);
+      if (vide) manquantes.push(s.nom);
+    });
+    if (manquantes.length) {
+      afficher('Il manque : ' + manquantes.join(', ') + '. Renseignez chaque saveur (0 si épuisée).', 'err');
+      return;
+    }
+    var saisie = { date: document.getElementById('date').value, parts: parts };
+    go.disabled = true; afficher('Enregistrement…');
+    google.script.run
+      .withSuccessHandler(function(res){
+        go.disabled = false; afficher('Enregistré : ' + res, 'ok');
+        SAVEURS.forEach(function(s){ document.getElementById('p_'+s.id).value=''; document.getElementById('e_'+s.id).textContent=''; });
+      })
+      .withFailureHandler(function(err){ go.disabled = false; afficher((err && err.message) ? err.message.replace(/^Error:\s*/,'') : 'Erreur, réessayez.', 'err'); })
+      .enregistrer(saisie);
+  });
+</script>
+</body>
+</html>

@@ -45,6 +45,7 @@ def dlc(saveur):
 SEMAINES_HISTORIQUE = 4      # nb de semaines regardees pour la prevision
 MARGE = 1.10                 # +10 % de securite
 SEUIL_ARRONDI = 0.3          # un cake de plus des que la fraction depasse 30 %
+MANQUE_MIN_PARTS = 1         # soir calme (sous la cible) : un cake de plus des qu'il manque au moins 1 part
 JOURS_OUVERTS = {0, 1, 2, 3, 4, 5}   # cafe : lundi -> samedi
 JOURS_PAULA = {0, 1, 2, 3, 4}        # Paula : lundi -> vendredi (prise de poste 17h30)
 HORIZON_PRODUCTIONS = 6      # nb de productions simulees a l'avance
@@ -312,6 +313,14 @@ def planifier(ventes, stock, aujourdhui: date):
         test = {s: [l[:] for l in lots[s]] for s in SAVEURS}
         manque = {s: sum(consommer(test[s], j, demande[j][s], dlc(s)) for j in couvre) for s in SAVEURS}
         cakes = {s: arrondi_cakes(manque[s]) for s in SAVEURS}
+        # soir calme : Paula a de la place, on n'accepte pas de rupture prevue pour economiser un cake.
+        # Les petits manques arrondis a la baisse recoivent un cake, du plus gros au plus petit, jusqu'a la cible.
+        cible = CAKES_CIBLE_PAR_JOUR.get(p.weekday(), CAKES_CIBLE_DEFAUT)
+        oublies = sorted((manque[s] - cakes[s] * PARTS_PAR_CAKE, s) for s in SAVEURS)
+        for reste, s in reversed(oublies):
+            if reste < MANQUE_MIN_PARTS or sum(cakes.values()) >= cible:
+                break
+            cakes[s] += 1
         # 2) on ajoute la production au stock, puis on vend les jours couverts
         for s in SAVEURS:
             if cakes[s]:

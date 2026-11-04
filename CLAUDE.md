@@ -37,6 +37,8 @@ Deux applis pour la production des cakes du Café Joséphine (Nice) :
   5 visés (4 le vendredi pour préparer le week-end et le lundi). Le café est ouvert du lundi au samedi.
 - Un cake produit le jour J se vend de J+1 à J+4 (J+3 pour Audrey et Val).
 - Prévision : les mêmes jours de semaine sur les 4 dernières semaines, +10 %.
+- Arrondi : un cake de plus si le manque dépasse 30 % d'un cake. Mais les soirs calmes (sous la cible de 5, ou 4 le vendredi),
+  dès qu'il manque au moins 1 part, on fait un cake (ajouté après la rupture citron/carotte du 04/11/2026).
 
 ## Fichiers
 

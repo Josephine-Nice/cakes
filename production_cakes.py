@@ -489,13 +489,15 @@ def generer_html(ventes, plan, stock, aujourdhui: date, chemin, comptages=None):
     nb_cpt = sum(1 for s_ in SAVEURS
                  if (c_ := dernier_comptage(comptages or {}, s_, aujourdhui)) and c_[0] == aujourdhui)
     if nb_cpt == len(SAVEURS):
-        etat = f"<p class='etat ok'>✔ Stock du jour saisi ({nb_cpt}/{len(SAVEURS)} saveurs) : vous pouvez produire.</p>"
-    elif nb_cpt:
-        etat = (f"<p class='etat ok'>Stock du jour saisi pour {nb_cpt}/{len(SAVEURS)} saveurs. "
-                f"Les autres sont estimées.</p>")
+        etat = (f"<div class='etat ok'><div class='etat-titre'>✔ Vous pouvez produire</div>"
+                f"<div class='etat-sous'>Stock du jour saisi ({nb_cpt}/{len(SAVEURS)} saveurs).</div></div>")
     else:
-        etat = ("<p class='etat attente'>Stock du jour pas encore saisi. "
-                "Attendez la saisie, puis rechargez la page : les quantités peuvent changer.</p>")
+        saisi = (f"Stock du jour saisi pour {nb_cpt}/{len(SAVEURS)} saveurs seulement."
+                 if nb_cpt else "Stock du jour pas encore saisi.")
+        etat = (f"<div class='etat attente'><div class='etat-titre'>✋ Vous ne pouvez pas encore produire</div>"
+                f"<div class='etat-sous'>{saisi} Les quantités ci-dessous sont provisoires : "
+                f"attendez la saisie, puis appuyez sur ↻ Actualiser.</div></div>")
+        corps0 = f"<div class='provisoire'>{corps0}</div>"
     bandeau = (f"<section class='paula'><button class='maj-btn' onclick='rafraichir()'>↻ Actualiser</button>"
                f"<div class='sm'>À produire ce soir · {e(titre0)}</div>"
                f"<h1>Bonjour Paula 👋</h1><p class='pour'>Voici la production de ce soir :</p>{etat}{corps0}</section>")
@@ -584,7 +586,9 @@ td.n,th:not(:first-child){{text-align:right}} td.z{{color:var(--mut)}}
 .tuiles{{display:flex;flex-wrap:wrap;gap:12px}}
 .tuile{{flex:1 1 130px;max-width:200px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}}
 .gros{{font-size:54px;font-weight:700;line-height:1;color:var(--acc)}} .nomc{{font-size:20px;font-weight:600;margin-top:4px}}
-.tot{{font-size:20px;margin:16px 0 0}} .etat{{font-size:15px;margin:0 0 14px;padding:8px 12px;border-radius:10px}} .etat.ok{{background:rgba(47,122,77,.12);color:#2f7a4d}} .etat.attente{{background:rgba(184,65,47,.10);color:var(--acc);font-weight:600}} .maj{{margin:10px 0 0}}
+.tot{{font-size:20px;margin:16px 0 0}} .etat{{margin:0 0 18px;padding:16px 18px;border-radius:14px;color:#fff}} .etat.ok{{background:#2f7a4d}} .etat.attente{{background:#b8412f}}
+.etat-titre{{font-size:26px;font-weight:800;line-height:1.15}} .etat-sous{{font-size:15px;margin-top:6px;opacity:.95}}
+.provisoire{{opacity:.45}} .maj{{margin:10px 0 0}}
 .bilan td.lb{{font-size:12px;color:var(--mut);text-align:left;white-space:nowrap}} .bilan th.fl{{vertical-align:middle;font-size:14px;color:var(--fg);text-align:left}}
 .bilan tbody{{border-top:2px solid var(--line)}} .bilan tr.fin td{{background:rgba(184,65,47,.06)}} .bilan tr.prod td{{background:rgba(47,122,77,.07)}} .bilan .saisi{{font-size:11px;color:#2f7a4d;font-weight:600}} .bilan .rupt{{color:var(--acc);font-weight:600;font-size:11px}}
 h2.det{{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-size:20px}}

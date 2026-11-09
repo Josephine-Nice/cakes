@@ -55,5 +55,13 @@
       "Elisa (carrot cake)": 2,
       "Val (matcha chocolat blanc)": 1
     }
+  },
+  {
+    "date": "2026-11-09",
+    "cakes": {
+      "Mel (marbré chocolat)": 1,
+      "Elisa (carrot cake)": 1,
+      "Audrey (rose framboise)": 1
+    }
   }
 ]

@@ -105,5 +105,11 @@
       "Elisa (carrot cake)": 1,
       "Audrey (rose framboise)": 1
     }
+  },
+  {
+    "date": "2026-11-17",
+    "cakes": {
+      "Mel (marbré chocolat)": 1
+    }
   }
 ]
